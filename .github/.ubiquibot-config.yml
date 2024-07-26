@@ -4,7 +4,7 @@ features:
     setLabel: true
     fundExternalClosedIssue: true
 payments: 
-  basePriceMultiplier: 1
+  basePriceMultiplier: 100
 timers: 
   reviewDelayTolerance: 86400000
   taskStaleTimeoutDuration: 2419200000
