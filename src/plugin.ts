@@ -4,6 +4,7 @@ import { Context } from "./types";
 import { handleAuth } from "./handlers/authentication";
 import { getCommitChanges } from "./handlers/get-commit-changes";
 import { handleRollback } from "./handlers/handle-rollback";
+import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 
 export async function plugin(inputs: PluginInputs) {
   const octokit = new Octokit({ auth: inputs.authToken });
@@ -13,23 +14,7 @@ export async function plugin(inputs: PluginInputs) {
     payload: inputs.eventPayload,
     config: inputs.settings,
     octokit,
-    logger: {
-      debug(message: unknown, ...optionalParams: unknown[]) {
-        console.debug(message, ...optionalParams);
-      },
-      info(message: unknown, ...optionalParams: unknown[]) {
-        console.log(message, ...optionalParams);
-      },
-      warn(message: unknown, ...optionalParams: unknown[]) {
-        console.warn(message, ...optionalParams);
-      },
-      error(message: unknown, ...optionalParams: unknown[]) {
-        console.error(message, ...optionalParams);
-      },
-      fatal(message: unknown, ...optionalParams: unknown[]) {
-        console.error(message, ...optionalParams);
-      },
-    },
+    logger: new Logs("info"),
   };
 
   await runPlugin(context);

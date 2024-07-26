@@ -43,8 +43,8 @@ export async function handleRollback(context: Context, usernames: string[]) {
       });
 
       logger.info("Repository updated successfully", { commit: updated.data.commit.html_url });
-    } catch (error) {
-      logger.error("Failed to update repository", { error });
+    } catch (er) {
+      logger.error("Failed to update repository", { er });
     }
   }
 }

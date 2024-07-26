@@ -9,6 +9,7 @@ import { STRINGS } from "./__mocks__/strings";
 import { setupTests, inMemoryCommits, createCommit } from "./__mocks__/helpers";
 import manifest from "../manifest.json";
 import { runPlugin } from "../src/plugin";
+import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 dotenv.config();
 
 jest.requireActual("@octokit/rest");
@@ -21,6 +22,11 @@ type CreateCommitParams = {
   added: string[];
 };
 const octokit = new Octokit();
+
+const LOG_EXTRA_SENDER = { caller: STRINGS.LOGS_ANONYMOUS, sender: STRINGS.USER_2 };
+const LOG_EXTRA_PUSHER = { caller: STRINGS.LOGS_ANONYMOUS, pusher: STRINGS.USER_2 };
+const LOG_EXTRA_COMMIT_URL = { caller: STRINGS.LOGS_ANONYMOUS, commit: STRINGS.COMMIT_URL };
+
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
@@ -127,11 +133,12 @@ describe("Config Protection", () => {
     await runPlugin(context);
 
     expect(warnSpy).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED);
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED);
+    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED, LOG_EXTRA_PUSHER);
+    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED, LOG_EXTRA_SENDER);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.CONFIG_CHANGED_IN_COMMIT);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.ROLLING_BACK_CHANGES);
-    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, { commit: STRINGS.COMMIT_URL });
+
+    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, LOG_EXTRA_COMMIT_URL);
   });
 
   it("Should rollback changes if pushed by non-admin and merged by non-billing", async () => {
@@ -147,11 +154,10 @@ describe("Config Protection", () => {
     await runPlugin(context);
 
     expect(warnSpy).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED);
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED);
+    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED, LOG_EXTRA_SENDER);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.CONFIG_CHANGED_IN_COMMIT);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.ROLLING_BACK_CHANGES);
-    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, { commit: STRINGS.COMMIT_URL });
+    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, LOG_EXTRA_COMMIT_URL);
   });
 
   it("Should rollback changes if pushed by non-billing and merged by non-admin", async () => {
@@ -167,11 +173,10 @@ describe("Config Protection", () => {
     await runPlugin(context);
 
     expect(warnSpy).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED);
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED);
+    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED, LOG_EXTRA_PUSHER);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.CONFIG_CHANGED_IN_COMMIT);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.ROLLING_BACK_CHANGES);
-    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, { commit: STRINGS.COMMIT_URL });
+    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, LOG_EXTRA_COMMIT_URL);
   });
 
   it("Should rollback changes if pushed by non-billing and non-admin", async () => {
@@ -187,11 +192,11 @@ describe("Config Protection", () => {
     await runPlugin(context);
 
     expect(warnSpy).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED);
-    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED);
+    expect(errorSpy).toHaveBeenCalledWith(STRINGS.PUSHER_NOT_AUTHED, LOG_EXTRA_PUSHER);
+    expect(errorSpy).toHaveBeenCalledWith(STRINGS.SENDER_NOT_AUTHED, LOG_EXTRA_SENDER);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.CONFIG_CHANGED_IN_COMMIT);
     expect(infoSpy).toHaveBeenCalledWith(STRINGS.ROLLING_BACK_CHANGES);
-    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, { commit: STRINGS.COMMIT_URL });
+    expect(infoSpy).toHaveBeenCalledWith(STRINGS.REPO_UPDATED_SUCCESSFULLY, LOG_EXTRA_COMMIT_URL);
   });
 });
 
@@ -203,7 +208,7 @@ function innerSetup(senderId: number, pusherId: number, commits: Context<"push">
   const context = createContext(sender, commits, pusher);
 
   const infoSpy = jest.spyOn(context.logger, "info");
-  const warnSpy = jest.spyOn(context.logger, "warn");
+  const warnSpy = jest.spyOn(context.logger, "debug");
   const errorSpy = jest.spyOn(context.logger, "error");
 
   return {
@@ -259,13 +264,7 @@ function createContext(sender: Context["payload"]["sender"], commits: Context<"p
         username: pusher?.login ?? sender?.login,
       },
     } as Context["payload"],
-    logger: {
-      info: console.info,
-      error: console.error,
-      warn: console.warn,
-      debug: console.debug,
-      fatal: console.error,
-    },
+    logger: new Logs("debug"),
     config: {
       filesThatNeedGuarded: [STRINGS.CONFIG_PATH],
       rolesAllowedToModify: ["admin", "billing_manager"],

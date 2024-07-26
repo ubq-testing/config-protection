@@ -83,8 +83,8 @@ export async function fetchGuardedFilesFromPreviousCommit(context: Context, unau
       },
       {} as Record<string, GetCommits["data"]>
     );
-  } catch (error: unknown) {
-    logger.debug("Commit sha error.", { error });
+  } catch (er: unknown) {
+    logger.debug("Commit sha error.", { er });
   }
   return {};
 }

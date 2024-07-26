@@ -6,11 +6,11 @@ export async function handleAuth(context: Context, username: string, pusher: str
   const isSenderAdmin = await isUserAuthorized(context, username);
 
   if (!isPusherAdmin) {
-    context.logger.error("Pusher is not an admin or billing manager");
+    context.logger.error("Pusher is not authorized", { pusher });
   }
 
   if (!isSenderAdmin) {
-    context.logger.error("Sender is not an admin or billing manager");
+    context.logger.error("Sender is not authorized", { sender: username });
   }
 
   return isPusherAdmin && isSenderAdmin;

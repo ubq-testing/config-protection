@@ -7,8 +7,8 @@ export const STRINGS = {
   SHA_1: "1234",
   UBQ_EMAIL: "ubiquity@ubq",
   CONFIG_CHANGED_IN_COMMIT: "Files changed in the commits: .github/ubiquibot-config.yml",
-  PUSHER_NOT_AUTHED: "Pusher is not an admin or billing manager",
-  SENDER_NOT_AUTHED: "Sender is not an admin or billing manager",
+  PUSHER_NOT_AUTHED: "Pusher is not authorized",
+  SENDER_NOT_AUTHED: "Sender is not authorized",
   ZERO_SHA: "0000000000000000000000000000000000000000",
   BASE_RATE_FILES: [".github/ubiquibot-config.yml", ".github/.ubiquibot-config.yml"],
   USER_UBIQUITY_IS_AUTHORIZED: "User ubiquity is authorized to make changes",
@@ -16,4 +16,5 @@ export const STRINGS = {
   ROLLING_BACK_CHANGES: "Rolling back changes",
   COMMIT_URL: "https://github.com/ubiquity/test-repo/commit/1",
   REPO_UPDATED_SUCCESSFULLY: "Repository updated successfully",
+  LOGS_ANONYMOUS: "_Logs.<anonymous>",
 };
