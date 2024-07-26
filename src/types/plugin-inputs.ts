@@ -11,14 +11,11 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   ref: string;
 }
 
-/**
- * This should contain the properties of the bot config
- * that are required for the plugin to function.
- *
- * The kernel will extract those and pass them to the plugin,
- * which are built into the context object from setup().
- */
-export const pluginSettingsSchema = T.Object({});
+export const pluginSettingsSchema = T.Object({
+  rolesAllowedToModify: T.Array(T.String()),
+  filesThatNeedGuarded: T.Array(T.String()),
+});
+
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
 
 export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;

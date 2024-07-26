@@ -2,6 +2,7 @@ import { Octokit } from "@octokit/rest";
 import { PluginInputs } from "./types";
 import { Context } from "./types";
 import { isPushEvent } from "./types/typeguards";
+import { handleAuth, isUserAuthorized } from "./handlers/authentication";
 
 /**
  * How a worker executes the plugin.
@@ -34,7 +35,27 @@ export async function plugin(inputs: PluginInputs) {
   };
 
   if (isPushEvent(context)) {
-    // do something
+    const { payload, logger } = context;
+
+    // who triggered the event
+    const sender = payload.sender?.login;
+    // who pushed the code
+    const pusher = payload.pusher?.name;
+
+    if (!sender || !pusher) {
+      logger.error("Sender or pusher is missing");
+      return;
+    }
+
+    const isAuthorized = await handleAuth(context, sender, pusher);
+
+    if (!isAuthorized) {
+      logger.error("Sender or pusher is not authorized");
+      return;
+    }
+
+
+
   }
 
 }
