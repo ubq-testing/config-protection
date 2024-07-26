@@ -6,7 +6,7 @@ import { isUserAuthorized } from "./authentication";
 export async function fetchGuardedFilesFromPreviousCommit(context: Context, unauthedUsernames: string[]) {
   const {
     logger,
-    payload: { repository },
+    payload: { repository, ref },
     config: { filesThatNeedGuarded },
     octokit,
   } = context;
@@ -18,6 +18,7 @@ export async function fetchGuardedFilesFromPreviousCommit(context: Context, unau
       owner: returnOptional(repository.owner?.login),
       repo: repository.name,
       per_page: 100,
+      sha: returnOptional(ref),
     })) as ListCommits[];
 
     if (!commits.length) {
