@@ -1,0 +1,28 @@
+features: 
+  assistivePricing: false
+  publicAccessControl: 
+    setLabel: true
+    fundExternalClosedIssue: true
+payments: 
+  basePriceMultiplier: 2
+timers: 
+  reviewDelayTolerance: 86400000
+  taskStaleTimeoutDuration: 2419200000
+  taskFollowUpDuration: 302400000
+  taskDisqualifyDuration: 604800000
+disabledCommands: []
+labels: 
+  time: 
+    - "Time: <1 Hour"
+    - "Time: <2 Hours"
+    - "Time: <4 Hours"
+    - "Time: <1 Day"
+    - "Time: <1 Week"
+  priority: 
+    - "Priority: 1 (Normal)"
+    - "Priority: 2 (Medium)"
+    - "Priority: 3 (High)"
+    - "Priority: 4 (Urgent)"
+    - "Priority: 5 (Emergency)"
+  miscellaneous: 
+    maxConcurrentTasks: 3
