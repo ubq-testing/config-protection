@@ -5,7 +5,8 @@ import { STRINGS } from "./strings";
 import usersGet from "./users-get.json";
 
 export function getBaseRateChanges() {
-    return Buffer.from(`
+  return Buffer.from(
+    `
   diff--git a /.github /.ubiquibot - config.yml b /.github /.ubiquibot - config.yml
   index f7f8053..cad1340 100644
   --- a /.github /.ubiquibot - config.yml
@@ -23,97 +24,83 @@ export function getBaseRateChanges() {
 @ -40,115 +36,124 @@
           setLabel: true
         assistivePricing: true
-  `).toString("base64");
+  `
+  ).toString("base64");
 }
 
 export function getAuthor(isAuthed: boolean, isBilling: boolean) {
-    if (isAuthed) {
-        return AUTHED_USER;
-    }
+  if (isAuthed) {
+    return AUTHED_USER;
+  }
 
-    if (isBilling) {
-        return BILLING_MANAGER;
-    }
+  if (isBilling) {
+    return BILLING_MANAGER;
+  }
 
-    return UNAUTHED_USER;
+  return UNAUTHED_USER;
 }
 
 export function inMemoryCommits(id: string, isAuthed = true, withBaseRateChanges = true, isBilling = false): Context<"push">["payload"]["commits"] {
-    return [
-        {
-            author: getAuthor(isAuthed, isBilling),
-            committer: getAuthor(isAuthed, isBilling),
-            id: id,
-            message: "chore: update config",
-            timestamp: new Date().toISOString(),
-            tree_id: id,
-            url: "",
-            added: [],
-            modified: withBaseRateChanges ? [STRINGS.CONFIG_PATH] : [],
-            removed: [],
-            distinct: true,
-        },
-    ];
+  return [
+    {
+      author: getAuthor(isAuthed, isBilling),
+      committer: getAuthor(isAuthed, isBilling),
+      id: id,
+      message: "chore: update config",
+      timestamp: new Date().toISOString(),
+      tree_id: id,
+      url: "",
+      added: [],
+      modified: withBaseRateChanges ? [STRINGS.CONFIG_PATH] : [],
+      removed: [],
+      distinct: true,
+    },
+  ];
 }
 
-export function createCommit({
-    owner,
-    repo,
-    sha,
-    modified,
-    added,
-}: {
-    owner: string;
-    repo: string;
-    sha: string;
-    modified: string[];
-    added: string[];
-}) {
-    function _createCommit(id: number, owner: string) {
-        db.commit.create({
-            id,
-            owner: {
-                login: owner,
-            },
-            author: {
-                login: owner,
-            },
-            committer: {
-                login: owner,
-            },
-            repo,
-            sha,
-            modified,
-            added,
-            content: getBaseRateChanges(),
-            commit: {
-                html_url: "https://github.com/ubiquity/test-repo/commit/1",
-            },
-            data: {
-                files: [
-                    { filename: STRINGS.CONFIG_PATH, sha: STRINGS.SHA_1 },
-                ],
-            },
-        });
-    }
+export function createCommit({ owner, repo, sha, modified, added }: { owner: string; repo: string; sha: string; modified: string[]; added: string[] }) {
+  function commit(id: number, owner: string) {
+    db.commit.create({
+      id,
+      owner: {
+        login: owner,
+      },
+      author: {
+        login: owner,
+      },
+      committer: {
+        login: owner,
+      },
+      repo,
+      sha,
+      modified,
+      added,
+      content: getBaseRateChanges(),
+      commit: {
+        html_url: "https://github.com/ubiquity/test-repo/commit/1",
+      },
+      data: {
+        files: [{ filename: STRINGS.CONFIG_PATH, sha: STRINGS.SHA_1 }],
+      },
+    });
+  }
 
-    _createCommit(1, STRINGS.UBIQUITY);
-    _createCommit(2, owner);
+  commit(1, STRINGS.UBIQUITY);
+  commit(2, owner);
 }
-
 
 export async function setupTests() {
-    for (const item of usersGet) {
-        db.users.create(item);
-    }
+  for (const item of usersGet) {
+    db.users.create(item);
+  }
 
-    db.repo.create({
-        id: 1,
-        html_url: "",
-        name: STRINGS.TEST_REPO,
-        owner: {
-            login: STRINGS.UBIQUITY,
-            id: 1,
-        },
-    });
+  db.repo.create({
+    id: 1,
+    html_url: "",
+    name: STRINGS.TEST_REPO,
+    owner: {
+      login: STRINGS.UBIQUITY,
+      id: 1,
+    },
+  });
 }

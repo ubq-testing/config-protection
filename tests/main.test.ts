@@ -9,7 +9,6 @@ import { STRINGS } from "./__mocks__/strings";
 import { setupTests, inMemoryCommits, createCommit } from "./__mocks__/helpers";
 import manifest from "../manifest.json";
 import { runPlugin } from "../src/plugin";
-import { info } from "console";
 dotenv.config();
 
 jest.requireActual("@octokit/rest");
@@ -196,14 +195,7 @@ describe("Config Protection", () => {
   });
 });
 
-
-
-function innerSetup(
-  senderId: number,
-  pusherId: number,
-  commits: Context<"push">["payload"]["commits"],
-  commitParams: CreateCommitParams,
-) {
+function innerSetup(senderId: number, pusherId: number, commits: Context<"push">["payload"]["commits"], commitParams: CreateCommitParams) {
   const sender = db.users.findFirst({ where: { id: { equals: senderId } } }) as unknown as Context["payload"]["sender"];
   const pusher = db.users.findFirst({ where: { id: { equals: pusherId } } }) as unknown as Context["payload"]["sender"];
 
@@ -218,15 +210,11 @@ function innerSetup(
     context,
     infoSpy,
     warnSpy,
-    errorSpy
+    errorSpy,
   };
 }
 
-function createContext(
-  sender: Context["payload"]["sender"],
-  commits: Context<"push">["payload"]["commits"],
-  pusher?: Context["payload"]["sender"],
-): Context {
+function createContext(sender: Context["payload"]["sender"], commits: Context<"push">["payload"]["commits"], pusher?: Context["payload"]["sender"]): Context {
   return {
     payload: {
       action: "created",

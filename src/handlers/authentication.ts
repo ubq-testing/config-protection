@@ -24,9 +24,7 @@ export async function isUserAuthorized(context: Context, username: string): Prom
 }
 
 function checkAuth(permission: string, role: string, rolesAllowedToModify: string[]) {
-  if (rolesAllowedToModify.includes(permission)) return true;
-  if (rolesAllowedToModify.includes(role)) return true;
-  return false;
+  return rolesAllowedToModify.includes(permission) || rolesAllowedToModify.includes(role);
 }
 
 async function checkCollaboratorPermission(context: Context, username: string) {

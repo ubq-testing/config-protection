@@ -99,6 +99,6 @@ export const db = factory({
     html_url: String,
     data: {
       files: Array,
-    }
+    },
   },
 });

@@ -59,25 +59,25 @@ export const handlers = [
     });
   }),
   // get repo commits
-  http.get("https://api.github.com/repos/:owner/:repo/commits", ({ params: { owner, repo, path } }) => {
+  http.get("https://api.github.com/repos/:owner/:repo/commits", ({ params: { path } }) => {
     const commits = db.commit.getAll();
     if (path === ".github/ubiquibot-config.yml") {
-      return HttpResponse.json(commits[0])
+      return HttpResponse.json(commits[0]);
     }
-    return HttpResponse.json(commits[1])
+    return HttpResponse.json(commits[1]);
   }),
-  http.get("https://api.github.com/repos/:owner/:repo/contents/:path", ({ params: { owner, repo, path } }) => {
+  http.get("https://api.github.com/repos/:owner/:repo/contents/:path", ({ params: { path } }) => {
     const commits = db.commit.getAll();
     if (path === ".github/ubiquibot-config.yml") {
-      return HttpResponse.json(commits[0])
+      return HttpResponse.json(commits[0]);
     }
-    return HttpResponse.json(commits[1])
+    return HttpResponse.json(commits[1]);
   }),
-  http.put("https://api.github.com/repos/:owner/:repo/contents/:path", ({ params: { owner, repo, path } }) => {
+  http.put("https://api.github.com/repos/:owner/:repo/contents/:path", ({ params: { path } }) => {
     const commits = db.commit.getAll();
     if (path === ".github/ubiquibot-config.yml") {
-      return HttpResponse.json(commits[0])
+      return HttpResponse.json(commits[0]);
     }
-    return HttpResponse.json(commits[1])
+    return HttpResponse.json(commits[1]);
   }),
 ];
