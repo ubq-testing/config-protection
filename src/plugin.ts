@@ -36,7 +36,11 @@ export async function plugin(inputs: PluginInputs) {
   };
 
   if (context.eventName === "push") {
-    const { payload, logger, config: { filesThatNeedGuarded } } = context;
+    const {
+      payload,
+      logger,
+      config: { filesThatNeedGuarded },
+    } = context;
 
     // who triggered the event
     const sender = payload.sender?.login;
@@ -60,16 +64,15 @@ export async function plugin(inputs: PluginInputs) {
       return;
     }
 
-    if (!filesThatNeedGuarded.some(file => changes.includes(file))) {
+    if (!filesThatNeedGuarded.some((file) => changes.includes(file))) {
       logger.info("No changes found in the files that need to be guarded");
       return;
     }
 
-    if (!await handleAuth(context, sender, pusher)) {
-      await handleRollback(context);
+    if (!(await handleAuth(context, sender, pusher))) {
+      await handleRollback(context, [sender, pusher]);
     } else {
       logger.info(`User ${sender} is authorized to make changes`);
     }
   }
 }
-

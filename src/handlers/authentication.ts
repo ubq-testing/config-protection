@@ -13,16 +13,14 @@ export async function handleAuth(context: Context, username: string, pusher: str
     context.logger.error("Sender is not an admin or billing manager");
   }
 
-  return isPusherAdmin && isSenderAdmin
+  return isPusherAdmin && isSenderAdmin;
 }
 
 export async function isUserAuthorized(context: Context, username: string): Promise<boolean> {
-  const { config: { rolesAllowedToModify } } = context;
-  return checkAuth(
-    await checkCollaboratorPermission(context, username),
-    await checkMembershipForUser(context, username),
-    rolesAllowedToModify
-  );
+  const {
+    config: { rolesAllowedToModify },
+  } = context;
+  return checkAuth(await checkCollaboratorPermission(context, username), await checkMembershipForUser(context, username), rolesAllowedToModify);
 }
 
 function checkAuth(permission: string, role: string, rolesAllowedToModify: string[]) {
@@ -33,21 +31,29 @@ function checkAuth(permission: string, role: string, rolesAllowedToModify: strin
 
 async function checkCollaboratorPermission(context: Context, username: string) {
   const { owner, name } = context.payload.repository;
-  const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
-    owner: returnOptional(owner?.login),
-    repo: name,
-    username,
-  });
-  return response.data.permission
+  try {
+    const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
+      owner: returnOptional(owner?.login),
+      repo: name,
+      username,
+    });
+    return response.data.permission;
+  } catch (error) {
+    return "none";
+  }
 }
 
 async function checkMembershipForUser(context: Context, username: string) {
   const { octokit, payload } = context;
   if (!payload.organization) throw new Error(`No organization found in payload!`);
-  const { data: membership } = await octokit.rest.orgs.getMembershipForUser({
-    org: payload.organization.login,
-    username,
-  });
+  try {
+    const { data: membership } = await octokit.rest.orgs.getMembershipForUser({
+      org: payload.organization.login,
+      username,
+    });
 
-  return membership.role
+    return membership.role;
+  } catch (error) {
+    return "none";
+  }
 }

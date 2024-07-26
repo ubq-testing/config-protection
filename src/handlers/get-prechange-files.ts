@@ -1,65 +1,89 @@
 import { Context } from "../types/context";
+import { GetCommits, ListCommits } from "../types/github";
 import { returnOptional } from "../utils";
+import { isUserAuthorized } from "./authentication";
 
-export async function fetchGuardedFilesFromPreviousCommit(context: Context) {
-    const {
-        logger,
-        payload: { repository, before, after, head_commit: headCommit },
-        config: { filesThatNeedGuarded },
-    } = context;
+export async function fetchGuardedFilesFromPreviousCommit(context: Context, unauthedUsernames: string[]) {
+  const {
+    logger,
+    payload: { repository },
+    config: { filesThatNeedGuarded },
+    octokit,
+  } = context;
 
-    let commitData;
+  let commitData = {} as GetCommits;
 
-    try {
-        commitData = await context.octokit.repos.getCommit({
-            owner: returnOptional(repository.owner?.login),
-            repo: repository.name,
-            ref: returnOptional(headCommit?.id)
-        });
-    } catch (error: unknown) {
-        logger.debug("Commit sha error.", { error });
+  try {
+    const commits = (await octokit.paginate(octokit.repos.listCommits, {
+      owner: returnOptional(repository.owner?.login),
+      repo: repository.name,
+      per_page: 100,
+    })) as ListCommits[];
+
+    if (!commits.length) {
+      logger.info("No commits found in the repository");
+      return;
     }
 
-    const files = commitData?.data.files
+    const unauthedRemoved = commits.filter((commit) => {
+      return !unauthedUsernames.includes(returnOptional(commit?.author?.login));
+    });
 
-    if (!files?.length) {
-        logger.info("No files found in the commit");
-        return;
+    if (!unauthedRemoved.length) {
+      logger.info("No commits found in the repository by authorized user(s)");
+      return;
     }
 
-    logger.info("Files to rollback", { files: files.map((file) => file.filename) });
+    let mostRecentAuthedCommit = unauthedRemoved[0];
+    let counter = 1;
+    let isAuthed = false;
 
-    const guardedFiles: Record<string, string> = {};
-    const mapped: Record<string, string[]> = {};
+    while (!isAuthed) {
+      if (!unauthedRemoved[counter]) {
+        break;
+      }
 
-    for (const file of files) {
-        if (filesThatNeedGuarded.includes(file.filename)) {
-            guardedFiles[file.filename] = file.sha;
-        }
+      const { author, committer } = mostRecentAuthedCommit;
+
+      if (await isUserAuthorized(context, returnOptional(committer).login)) {
+        isAuthed = true;
+      } else if (await isUserAuthorized(context, returnOptional(author).login)) {
+        isAuthed = true;
+      } else {
+        mostRecentAuthedCommit = unauthedRemoved[counter];
+        counter++;
+      }
     }
 
-    await Promise.all(
-        Object.entries(guardedFiles).map(async ([file, sha]) => {
-            try {
-                const { data: fileData } = await context.octokit.repos.getContent({
-                    owner: returnOptional(context.payload.repository.owner?.login),
-                    repo: context.payload.repository.name,
-                    path: file,
-                    mediaType: {
-                        format: "raw",
-                    },
-                    ref: before,
-                });
+    commitData = await context.octokit.repos.getCommit({
+      owner: returnOptional(repository.owner?.login),
+      repo: repository.name,
+      ref: returnOptional(mostRecentAuthedCommit.sha),
+    });
 
-                if (!mapped[file]) {
-                    mapped[file] = [];
-                }
+    const files = commitData.data.files?.map((file) => file.filename);
 
-                mapped[file].push(sha, fileData as unknown as string)
-            } catch (error: unknown) {
-                logger.error("File content error.", { error });
-            }
-        }));
+    if (!files) {
+      logger.info("No files found in the commit");
+      return;
+    }
 
-    return mapped;
+    const guardedFiles = files.filter((file) => filesThatNeedGuarded.includes(file));
+
+    if (!guardedFiles.length) {
+      logger.info("No files found that need to be guarded");
+      return;
+    }
+
+    return guardedFiles.reduce(
+      (acc, file) => {
+        acc[file] = commitData.data;
+        return acc;
+      },
+      {} as Record<string, GetCommits["data"]>
+    );
+  } catch (error: unknown) {
+    logger.debug("Commit sha error.", { error });
+  }
+  return {};
 }
