@@ -5,9 +5,6 @@ import { handleAuth } from "./handlers/authentication";
 import { getCommitChanges } from "./handlers/get-commit-changes";
 import { handleRollback } from "./handlers/handle-rollback";
 
-/**
- * How a worker executes the plugin.
- */
 export async function plugin(inputs: PluginInputs) {
   const octokit = new Octokit({ auth: inputs.authToken });
 
@@ -35,6 +32,13 @@ export async function plugin(inputs: PluginInputs) {
     },
   };
 
+  await runPlugin(context);
+}
+
+/**
+ * How a worker executes the plugin.
+ */
+export async function runPlugin(context: Context) {
   if (context.eventName === "push") {
     const {
       payload,
@@ -74,5 +78,7 @@ export async function plugin(inputs: PluginInputs) {
     } else {
       logger.info(`User ${sender} is authorized to make changes`);
     }
+  } else {
+    context.logger.error(`Unsupported event: ${context.eventName}`);
   }
 }
