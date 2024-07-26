@@ -1,5 +1,5 @@
 import { Context } from "../types/context";
-
+import { returnOptional } from "../utils";
 
 export async function handleAuth(context: Context, username: string, pusher: string): Promise<boolean> {
   const isPusherAdmin = await isUserAuthorized(context, pusher);
@@ -32,10 +32,10 @@ function checkAuth(permission: string, role: string, rolesAllowedToModify: strin
 }
 
 async function checkCollaboratorPermission(context: Context, username: string) {
-  const { owner, repo } = context.payload.repository;
+  const { owner, name } = context.payload.repository;
   const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
-    owner,
-    repo,
+    owner: returnOptional(owner?.login),
+    repo: name,
     username,
   });
   return response.data.permission
@@ -51,4 +51,3 @@ async function checkMembershipForUser(context: Context, username: string) {
 
   return membership.role
 }
-

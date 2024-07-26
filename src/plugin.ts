@@ -1,8 +1,9 @@
 import { Octokit } from "@octokit/rest";
 import { PluginInputs } from "./types";
 import { Context } from "./types";
-import { isPushEvent } from "./types/typeguards";
-import { handleAuth, isUserAuthorized } from "./handlers/authentication";
+import { handleAuth } from "./handlers/authentication";
+import { getCommitChanges } from "./handlers/get-commit-changes";
+import { handleRollback } from "./handlers/handle-rollback";
 
 /**
  * How a worker executes the plugin.
@@ -34,8 +35,8 @@ export async function plugin(inputs: PluginInputs) {
     },
   };
 
-  if (isPushEvent(context)) {
-    const { payload, logger } = context;
+  if (context.eventName === "push") {
+    const { payload, logger, config: { filesThatNeedGuarded } } = context;
 
     // who triggered the event
     const sender = payload.sender?.login;
@@ -47,16 +48,28 @@ export async function plugin(inputs: PluginInputs) {
       return;
     }
 
-    const isAuthorized = await handleAuth(context, sender, pusher);
+    const changes = getCommitChanges(logger, payload.commits);
 
-    if (!isAuthorized) {
-      logger.error("Sender or pusher is not authorized");
+    if (!changes.length) {
+      logger.info("No changes found in the commits");
       return;
     }
 
+    if (!filesThatNeedGuarded.length) {
+      logger.info("No files to guard");
+      return;
+    }
 
+    if (!filesThatNeedGuarded.some(file => changes.includes(file))) {
+      logger.info("No changes found in the files that need to be guarded");
+      return;
+    }
 
+    if (!await handleAuth(context, sender, pusher)) {
+      await handleRollback(context);
+    } else {
+      logger.info(`User ${sender} is authorized to make changes`);
+    }
   }
-
 }
 
